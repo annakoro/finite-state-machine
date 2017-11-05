@@ -4,11 +4,10 @@ class FSM {
      * @param config
      */
     constructor(config) {
-        var state, event, i = 0;
+        var state, event;
         this.state = config.initial;
-        var history = [];
-        history[i] = 'normal';
-        i++;
+        var fsmHistory = new Array();
+        fsmHistory.push('normal');
     }
 
     /**
@@ -34,23 +33,21 @@ class FSM {
      * @param event
      */
     trigger(event) {
-        switch (event) {
-            case 'study':
+            if (event == 'study' && this.state == 'normal'){
                 this.state = 'busy';
-                break;
-            case 'get_tired':
+             // fsmHistory.push('busy');     
+             } else if (event == 'get_tired' && this.state =='busy'){
                 this.state = 'sleeping';
-                break;
-            case 'eat':
-            case 'get_up':
+            } else if (event == 'eat'&& this.state =='hungry'){
                 this.state = 'normal';
-                break;
-            case 'get_hungry':
+            } else if (event == 'get_up' && this.state == 'sleeping'){
+                this.state = 'normal';
+            } else if (event == 'get_hungry' && this.state == 'busy'){
                 this.state = 'hungry';
-                break;
-        }
-        //  this.history[this.i] = this.state;
-        //         this.i++;       
+            } else if (event == 'get_hungry' && this.state == 'sleeping'){
+                this.state = 'hungry';
+            } else throw new Error('wrong event');
+            
     }
 
     /**
@@ -67,6 +64,7 @@ class FSM {
      * @returns {Array}
      */
     getStates(event) {
+        if(!event) return ['normal', 'busy', 'hungry', 'sleeping'];
         switch (event) {
             case 'study':
                 return ['normal'];
@@ -83,8 +81,10 @@ class FSM {
             case 'get_hungry':
                 return ['busy', 'sleeping'];
                 break;
+            //case '':
+                //return ['normal', 'busy', 'hungry', 'sleeping'];
             default:
-                return ['normal', 'busy', 'hungry', 'sleeping'];
+                return [];
         }
     }
 
@@ -95,8 +95,9 @@ class FSM {
      */
 
     undo() {
-        if (this.history[1] == undefined) return false;
-        else return this.history[this.i - 1];
+        if (!this.fsmHistory[1]) return false;
+        else this.fsmHistory.pop();
+        return true;
     }
 
     /**
