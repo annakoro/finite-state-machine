@@ -6,8 +6,7 @@ class FSM {
     constructor(config) {
         var state, event;
         this.state = config.initial;
-        var fsmHistory = new Array();
-        fsmHistory.push('normal');
+
     }
 
     /**
@@ -33,21 +32,26 @@ class FSM {
      * @param event
      */
     trigger(event) {
-            if (event == 'study' && this.state == 'normal'){
-                this.state = 'busy';
-             // fsmHistory.push('busy');     
-             } else if (event == 'get_tired' && this.state =='busy'){
-                this.state = 'sleeping';
-            } else if (event == 'eat'&& this.state =='hungry'){
-                this.state = 'normal';
-            } else if (event == 'get_up' && this.state == 'sleeping'){
-                this.state = 'normal';
-            } else if (event == 'get_hungry' && this.state == 'busy'){
-                this.state = 'hungry';
-            } else if (event == 'get_hungry' && this.state == 'sleeping'){
-                this.state = 'hungry';
-            } else throw new Error('wrong event');
-            
+        var fsmHistory = new Array();
+        fsmHistory.push('normal');
+        if (event == 'study' && this.state == 'normal') {
+            this.state = 'busy';
+            fsmHistory.push('normal');
+            //this.fsmHistory.prototype.push('busy');     
+        } else if (event == 'get_tired' && this.state == 'busy') {
+            this.state = 'sleeping';
+        } else if (event == 'eat' && this.state == 'hungry') {
+            this.state = 'normal';
+        } else if (event == 'get_up' && this.state == 'sleeping') {
+            this.state = 'normal';
+        } else if (event == 'get_hungry' && this.state == 'busy') {
+            this.state = 'hungry';
+        } else if (event == 'get_hungry' && this.state == 'sleeping') {
+            this.state = 'hungry';
+        } else throw new Error('wrong event');
+        fsmHistory.push(this.state);
+
+
     }
 
     /**
@@ -64,7 +68,7 @@ class FSM {
      * @returns {Array}
      */
     getStates(event) {
-        if(!event) return ['normal', 'busy', 'hungry', 'sleeping'];
+        if (!event) return ['normal', 'busy', 'hungry', 'sleeping'];
         switch (event) {
             case 'study':
                 return ['normal'];
@@ -82,7 +86,7 @@ class FSM {
                 return ['busy', 'sleeping'];
                 break;
             //case '':
-                //return ['normal', 'busy', 'hungry', 'sleeping'];
+            //return ['normal', 'busy', 'hungry', 'sleeping'];
             default:
                 return [];
         }
@@ -95,9 +99,14 @@ class FSM {
      */
 
     undo() {
-        if (!this.fsmHistory[1]) return false;
-        else this.fsmHistory.pop();
-        return true;
+        if (!this.fsmHistory) {
+            return false;
+        }
+        else {
+            this.state = this.fsmHistory[this.fsmHistory.length() - 2];
+            this.fsmHistory.pop();
+            return true;
+        }
     }
 
     /**
@@ -105,7 +114,9 @@ class FSM {
      * Returns false if redo is not available.
      * @returns {Boolean}
      */
-    redo() { }
+    redo() {
+        return false;
+    }
 
     /**
      * Clears transition history
