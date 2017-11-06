@@ -4,9 +4,11 @@ class FSM {
      * @param config
      */
     constructor(config) {
-        var state, event;
+        var state, event, i;
         this.state = config.initial;
-
+        this.fsmHistory = new Array();
+        this.fsmHistory.push('normal');
+        this.i = 0;
     }
 
     /**
@@ -32,11 +34,9 @@ class FSM {
      * @param event
      */
     trigger(event) {
-        var fsmHistory = new Array();
-        fsmHistory.push('normal');
+
         if (event == 'study' && this.state == 'normal') {
             this.state = 'busy';
-            fsmHistory.push('normal');
             //this.fsmHistory.prototype.push('busy');     
         } else if (event == 'get_tired' && this.state == 'busy') {
             this.state = 'sleeping';
@@ -49,9 +49,8 @@ class FSM {
         } else if (event == 'get_hungry' && this.state == 'sleeping') {
             this.state = 'hungry';
         } else throw new Error('wrong event');
-        fsmHistory.push(this.state);
-
-
+        this.fsmHistory.push(this.state);
+        this.i++;
     }
 
     /**
@@ -99,12 +98,12 @@ class FSM {
      */
 
     undo() {
-        if (!this.fsmHistory) {
+        if (this.i == 0) {
             return false;
         }
         else {
-            this.state = this.fsmHistory[this.fsmHistory.length() - 2];
-            this.fsmHistory.pop();
+            this.i--;
+            this.state = this.fsmHistory[this.i];
             return true;
         }
     }
@@ -115,13 +114,26 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        return false;
+        if (this.i == this.fsmHistory.length -1) {
+            this.i++;
+            return false;
+        }
+        else {
+            this.i++;
+            this.state = this.fsmHistory[this.i];
+            return true;
+        }
     }
 
     /**
      * Clears transition history
      */
-    clearHistory() { }
+    clearHistory() {
+        this.i = 0;
+        this.fsmHistory.length = 0;
+        this.fsmHistory.push('normal');
+    }
+
 }
 
 module.exports = FSM;
