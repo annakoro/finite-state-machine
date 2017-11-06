@@ -114,7 +114,7 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if (this.i == this.fsmHistory.length) {
+        if (this.i == this.fsmHistory.length -1) {
             this.i++;
             return false;
         }
@@ -131,6 +131,7 @@ class FSM {
     clearHistory() {
         this.i = 0;
         this.fsmHistory.length = 0;
+        this.fsmHistory.push('normal');
     }
 
 }
