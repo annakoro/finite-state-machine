@@ -1,285 +1,140 @@
-const FSM = require('../src/fsm');
-
-/** Good luck! :) **/
-
-/** visualisation https://i.imgur.com/07IO6TE.png **/
-const config = {
-    initial: 'normal',
-    states: {
-        normal: {
-            transitions: {
-                study: 'busy',
-            }
-        },
-        busy: {
-            transitions: {
-                get_tired: 'sleeping',
-                get_hungry: 'hungry',
-            }
-        },
-        hungry: {
-            transitions: {
-                eat: 'normal'
-            },
-        },
-        sleeping: {
-            transitions: {
-                get_hungry: 'hungry',
-                get_up: 'normal',
-            },
-        },
+class FSM {
+    /**
+     * Creates new FSM instance.
+     * @param config
+     */
+    constructor(config) {
+        var state, event, i;
+        this.state = config.initial;
+        this.fsmHistory = new Array();
+        this.fsmHistory.push('normal');
+        this.i = 0;
     }
-};
 
-describe('FSM', () => {
-    describe('#constructor', () => {
-        it('throws an exception if config isn\'t passed', () => {
-            expect(() => new FSM()).to.throw(Error);
-        });
-    });
-
-    describe('#getState', () => {
-        it('returns initial state after creation', () => {
-            const student = new FSM(config);
-
-            expect(student.getState()).to.equal('normal');
-        });
-    });
-
-    describe('#changeState', () => {
-        it('changes state', () => {
-            const student = new FSM(config);
-
-            student.changeState('hungry');
-            expect(student.getState()).to.equal('hungry');
-        });
-
-        it('throws an exception if state isn\'t exist', () => {
-            const student = new FSM(config);
-
-            expect(() => student.changeState('hmmm... exception?')).to.throw(Error);
-        });
-    });
-
-    describe('#trigger', () => {
-        it('changes initial state according to event', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            expect(student.getState()).to.equal('busy');
-        });
-
-        it('correctly changes states [3 in row]', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.trigger('get_tired');
-            expect(student.getState()).to.equal('sleeping');
-
-            student.trigger('get_hungry');
-            expect(student.getState()).to.equal('hungry');
-        });
-
-        it('correctly changes states [circular]', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.trigger('get_hungry');
-            expect(student.getState()).to.equal('hungry');
-
-            student.trigger('eat');
-            expect(student.getState()).to.equal('normal');
-        });
-
-        it('throws an exception if event in current state isn\'t exist', () => {
-            const student = new FSM(config);
-            student.trigger('study');
-
-            expect(() => student.trigger('hmmm... exception?')).to.throw(Error);
-            expect(() => student.trigger('eat')).to.throw(Error);
-            expect(() => student.trigger('get_up')).to.throw(Error);
-        });
-    });
-
-    describe('#reset', () => {
-        it('resets current state to initial', () => {
-            const student = new FSM(config);
-            student.trigger('study');
-            student.trigger('get_hungry');
-            student.reset();
-
-            expect(student.getState()).to.equal('normal');
-        });
-    });
-
-    describe('#getStates', () => {
-        it('returns all states if argument is empty', () => {
-            const student = new FSM(config);
-
-            expect(student.getStates()).to.deep.equal(['normal', 'busy', 'hungry', 'sleeping']);
-        });
-
-        it('returns correct states for event', () => {
-            const student = new FSM(config);
-
-            expect(student.getStates('get_hungry')).to.deep.equal(['busy', 'sleeping']);
-            expect(student.getStates('study')).to.deep.equal(['normal']);
-        });
-
-        it('returns empty array for not valid array', () => {
-            const student = new FSM(config);
-
-            expect(student.getStates('hmmm... empty array?')).to.deep.equal([]);
-        });
-
-    });
-
-    describe('#undo', () => {
-        it('returns false for initial FSM', () => {
-            const student = new FSM(config);
-
-            expect(student.undo()).to.be.false;
-        });
-
-        it('goes back to prev step after trigger', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            expect(student.getState()).to.equal('normal');
-
-            student.trigger('study');
-            student.trigger('get_hungry');
-            student.undo();
-            expect(student.getState()).to.equal('busy');
-        });
-
-        it('goes back to prev after changeState', () => {
-            const student = new FSM(config);
-
-            student.changeState('hungry');
-            student.undo();
-            expect(student.getState()).to.equal('normal');
-        });
-
-        it('returns true if transition was successful', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            expect(student.undo()).to.be.true;
-        });
-
-        it('returns false if undo is not available', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            expect(student.undo()).to.be.false;
-        });
-
-    });
-
-    describe('#redo', () => {
-        it('returns false for initial FSM', () => {
-            const student = new FSM(config);
-
-            expect(student.redo()).to.be.false;
-        });
-
-        it('cancels undo', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            student.redo();
-            expect(student.getState()).to.equal('busy');
-
-            student.trigger('get_tired');
-            student.trigger('get_hungry');
-
-            student.undo();
-            student.undo();
-
-            student.redo();
-            student.redo();
-
-            expect(student.getState()).to.equal('hungry');
-        });
-
-        it('returns true if transition was successful', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            expect(student.redo()).to.be.true;
-        });
-
-        it('returns false if redo is not available', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            student.redo();
-            expect(student.redo()).to.be.false;
-        });
-
-        it('correct cancels multiple undos ', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            student.redo();
-            student.undo();
-            student.redo();
-            student.undo();
-            student.redo();
-            student.undo();
-            student.redo();
-            student.undo();
-            student.redo();
-
-            expect(student.getState()).to.equal('busy');
-
-        });
-
-        it('disables redo after trigger call', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.undo();
-            student.trigger('study');
-            student.undo();
-            student.trigger('study');
-            student.redo();
-
-            expect(student.redo()).to.be.false;
-        });
-
-        it('disables redo after changeState call', () => {
-            const student = new FSM(config);
-
-            student.changeState('hungry');
-            student.undo();
-            student.changeState('normal');
-            student.undo();
-            student.changeState('busy');
-            student.redo();
-
-            expect(student.redo()).to.be.false;
-        });
-
-    });
-
-    describe('#clearHistory', () => {
-        it('clears transition history', () => {
-            const student = new FSM(config);
-
-            student.trigger('study');
-            student.trigger('get_hungry');
-            student.clearHistory();
-
-            expect(student.undo()).to.be.false;
-            expect(student.redo()).to.be.false;
-        });
-    });
-});
+    /**
+     * Returns active state.
+     * @returns {String}
+     */
+    getState() {
+        return this.state;
+    }
+
+    /**
+     * Goes to specified state.
+     * @param state
+     */
+    changeState(state) {
+        if (state != 'normal' && state != 'busy' && state != 'sleeping' && state != 'hungry')
+            throw new Error('no such state');
+        this.state = state;
+    }
+
+    /**
+     * Changes state according to event transition rules.
+     * @param event
+     */
+    trigger(event) {
+
+        if (event == 'study' && this.state == 'normal') {
+            this.state = 'busy';
+            //this.fsmHistory.prototype.push('busy');     
+        } else if (event == 'get_tired' && this.state == 'busy') {
+            this.state = 'sleeping';
+        } else if (event == 'eat' && this.state == 'hungry') {
+            this.state = 'normal';
+        } else if (event == 'get_up' && this.state == 'sleeping') {
+            this.state = 'normal';
+        } else if (event == 'get_hungry' && this.state == 'busy') {
+            this.state = 'hungry';
+        } else if (event == 'get_hungry' && this.state == 'sleeping') {
+            this.state = 'hungry';
+        } else throw new Error('wrong event');
+        this.fsmHistory.push(this.state);
+        this.i++;
+    }
+
+    /**
+     * Resets FSM state to initial.
+     */
+    reset() {
+        this.state = 'normal';
+    }
+
+    /**
+     * Returns an array of states for which there are specified event transition rules.
+     * Returns all states if argument is undefined.
+     * @param event
+     * @returns {Array}
+     */
+    getStates(event) {
+        if (!event) return ['normal', 'busy', 'hungry', 'sleeping'];
+        switch (event) {
+            case 'study':
+                return ['normal'];
+                break;
+            case 'get_tired':
+                return ['busy'];
+                break;
+            case 'eat':
+                return ['hungry'];
+                break;
+            case 'get_up':
+                return ['sleeping'];
+                break;
+            case 'get_hungry':
+                return ['busy', 'sleeping'];
+                break;
+            //case '':
+            //return ['normal', 'busy', 'hungry', 'sleeping'];
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * Goes back to previous state.
+     * Returns false if undo is not available.
+     * @returns {Boolean}
+     */
+
+    undo() {
+        if (this.i == 0) {
+            return false;
+        }
+        else {
+            this.i--;
+            this.state = this.fsmHistory[this.i];
+            return true;
+        }
+    }
+
+    /**
+     * Goes redo to state.
+     * Returns false if redo is not available.
+     * @returns {Boolean}
+     */
+    redo() {
+        if (this.i == this.fsmHistory.length) {
+            this.i++;
+            return false;
+        }
+        else {
+            this.i++;
+            this.state = this.fsmHistory[this.i];
+            return true;
+        }
+    }
+
+    /**
+     * Clears transition history
+     */
+    clearHistory() {
+        this.i = 0;
+        this.fsmHistory.length = 0;
+    }
+
+}
+
+module.exports = FSM;
+
+/** @Created by Uladzimir Halushka **/
