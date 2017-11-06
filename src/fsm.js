@@ -4,11 +4,11 @@ class FSM {
      * @param config
      */
     constructor(config) {
-        var state, event, i;
+        var state, event, i, flag;
         this.state = config.initial;
         this.fsmHistory = new Array();
         this.fsmHistory.push('normal');
-        this.i = 0;
+        this.i = 0; this.flag = false;
     }
 
     /**
@@ -27,6 +27,9 @@ class FSM {
         if (state != 'normal' && state != 'busy' && state != 'sleeping' && state != 'hungry')
             throw new Error('no such state');
         this.state = state;
+        this.fsmHistory.push(state);
+        this.i++;
+        this.flag = false;
     }
 
     /**
@@ -34,10 +37,9 @@ class FSM {
      * @param event
      */
     trigger(event) {
-
+        // this.state = this.fsmHistory[this.fsmHistory.length-1];
         if (event == 'study' && this.state == 'normal') {
             this.state = 'busy';
-            //this.fsmHistory.prototype.push('busy');     
         } else if (event == 'get_tired' && this.state == 'busy') {
             this.state = 'sleeping';
         } else if (event == 'eat' && this.state == 'hungry') {
@@ -49,8 +51,10 @@ class FSM {
         } else if (event == 'get_hungry' && this.state == 'sleeping') {
             this.state = 'hungry';
         } else throw new Error('wrong event');
+        //this.clearHistory();
         this.fsmHistory.push(this.state);
         this.i++;
+        this.flag = false;
     }
 
     /**
@@ -104,6 +108,7 @@ class FSM {
         else {
             this.i--;
             this.state = this.fsmHistory[this.i];
+            this.flag = true;
             return true;
         }
     }
@@ -114,7 +119,7 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if (this.i == this.fsmHistory.length -1) {
+        if (this.i == this.fsmHistory.length - 1) {
             this.i++;
             return false;
         }
