@@ -123,11 +123,12 @@ class FSM {
             this.i++;
             return false;
         }
-        else {
+        else if (this.flag) {
             this.i++;
             this.state = this.fsmHistory[this.i];
             return true;
         }
+        else return false;
     }
 
     /**
